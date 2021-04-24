@@ -11,7 +11,8 @@
 #include <cstring>
 #include <algorithm>
 #include <iterator>
-
+#include <thread>
+#include <chrono>
 using namespace std;
 
 // -----Macro Definitions-----
@@ -1330,22 +1331,33 @@ int cli__run_program()
     cout << "\n> Enter Object Code Filename: ";
     cin >> cli_data.object_code_filename;
     remove(cli_data.object_code_filename);
+    chrono::time_point<std::chrono::system_clock> StartTime;
+    chrono::time_point<std::chrono::system_clock> EndTime;
 
+    StartTime = std::chrono::system_clock::now();
+    
     /*cout << "------------OPTAB-------------" << endl;*/
-    fill_optab();
+    thread first(fill_optab);
     /*cout << "------------REGTAB-------------" << endl;*/
-    fill_regtab();
+    thread second(fill_regtab);
     /*cout << "------------ADTAB-------------" << endl;*/
-    fill_adtab();
+    thread third(fill_adtab);
     /*cout << "------------SYMTAB-------------" << endl;*/
-
+    first.join();
+    second.join();
+    third.join();
     if (pass_1_assembly() != SUCCESS)
     {
         return FAILURE;
     }
     cout << "-------------------------------" << endl;
     int ret_status = pass_2_assembly();
-
+    
+    EndTime = std::chrono::system_clock::now();
+    
+    double elapsed_time;
+    elapsed_time=chrono::duration_cast<std::chrono::milliseconds>(EndTime - StartTime).count();
+    cout << "Execution Time:  "<<elapsed_time<<" ms"<<endl;
     input_fp.close();
     instruction_fp.close();
     register_fp.close();
